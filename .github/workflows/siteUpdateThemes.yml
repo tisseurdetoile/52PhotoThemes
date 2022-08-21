@@ -1,5 +1,6 @@
 name: Update Themes
 on:
+  workflow_dispatch:
   schedule:
     - cron: '5 0 31 12 *'
 jobs:
