@@ -1,7 +1,5 @@
-
 <script>
 import ThemesDisplay from './components/ThemesDisplay.vue'
-
 
 export default {
   name: 'App',
@@ -12,24 +10,26 @@ export default {
     return {
       themes: [],
       year: new Date().getFullYear()
-    };
+    }
   },
   mounted() {
-        fetch(`./${this.year}.json`, {
-            headers: { 'Content-type': 'application/json' },
-        }).then(res=>res.json()).then((response) => {
-            this.themes = response;
-        }).catch( (error) => {
-            console.log(error)
-        });
-    }
+    fetch(`./${this.year}.json`, {
+      headers: { 'Content-type': 'application/json' }
+    })
+      .then((res) => res.json())
+      .then((response) => {
+        this.themes = response
+      })
+      .catch((error) => {
+        console.log(error)
+      })
+  }
 }
 </script>
 
 <template>
-  <ThemesDisplay :themes="themes" :year="year" />
+  <ThemesDisplay v-if="themes.length > 0" :themes="themes" :year="year" />
 </template>
-
 
 <style lang="less">
 *,
@@ -44,11 +44,12 @@ export default {
   background-color: rgba(255, 255, 128, 0.2);
 }
 
-#app, html {
+#app,
+html {
   color: #cccccc;
   background-color: #1a1a1a;
   text-align: center;
-  font-family: "Courier New", Courier, monospace;
+  font-family: 'Courier New', Courier, monospace;
   font-size: 1.3em;
 }
 
@@ -89,7 +90,21 @@ h1,
   text-align: left;
   padding: 0.66em 1em;
   font-weight: 400;
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    'Noto Sans',
+    sans-serif,
+    'Apple Color Emoji',
+    'Segoe UI Emoji',
+    'Segoe UI Symbol',
+    'Noto Color Emoji';
   color: #fff;
 }
 #banner .wide-container {
@@ -199,7 +214,7 @@ div.warning {
   height: 0;
 }
 .themes ul {
-  font-family: "Courier New", Courier, monospace;
+  font-family: 'Courier New', Courier, monospace;
   text-align: center;
   font-size: 100%;
   width: 100%;
@@ -225,7 +240,7 @@ div.warning {
 }
 
 .themes ul li::before {
-  content: "#" counter(my-awesome-counter) ". ";
+  content: '#' counter(my-awesome-counter) '. ';
   color: lightgrey;
   font-weight: bold;
 }
@@ -233,9 +248,9 @@ div.warning {
   text-decoration: underline;
   cursor: pointer;
   -webkit-user-select: none;
-     -moz-user-select: none;
-      -ms-user-select: none;
-          user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 .part-explanation {
   font-size: 75%;
@@ -270,11 +285,11 @@ div.warning {
   display: -ms-flexbox;
   display: flex;
   -ms-flex-pack: end;
-      justify-content: flex-end;
+  justify-content: flex-end;
   -ms-flex-line-pack: end;
-      align-content: flex-end;
+  align-content: flex-end;
   -ms-flex-direction: column;
-      flex-direction: column;
+  flex-direction: column;
   margin-bottom: 0.2em;
   margin-top: 0.9em;
 }
