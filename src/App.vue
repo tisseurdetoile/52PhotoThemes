@@ -1,9 +1,7 @@
-<template>
-  <ThemesDisplay :themes="themes" :year="year" />
-</template>
 
 <script>
 import ThemesDisplay from './components/ThemesDisplay.vue'
+
 
 export default {
   name: 'App',
@@ -27,6 +25,11 @@ export default {
     }
 }
 </script>
+
+<template>
+  <ThemesDisplay :themes="themes" :year="year" />
+</template>
+
 
 <style lang="less">
 *,
@@ -178,6 +181,7 @@ table td {
   text-align: left;
   padding: 0.2em 0 0.2em 1em;
 }
+
 .blurb {
   font-size: 75%;
   margin-top: 10px;
@@ -204,12 +208,10 @@ div.warning {
   border-radius: 0.6em;
   color: #ffffff;
   padding-top: 0.075rem;
-}
-
-.themes ul {
   text-align: left;
   list-style: none;
   -webkit-column-count: 3;
+  -moz-column-count: 3;
   column-count: 3;
   display: inline-block;
   list-style: none;
@@ -218,6 +220,7 @@ div.warning {
 }
 .themes ul li {
   text-align: left;
+  width: 100%;
   counter-increment: my-awesome-counter;
 }
 
