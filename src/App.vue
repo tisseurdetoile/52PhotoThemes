@@ -213,9 +213,9 @@ div.warning {
   font-size: 75%;
   height: 0;
 }
+
 .themes ul {
   font-family: 'Courier New', Courier, monospace;
-  text-align: center;
   font-size: 100%;
   width: 100%;
   background-color: #333333;
@@ -229,10 +229,17 @@ div.warning {
   -moz-column-count: 3;
   column-count: 3;
   display: inline-block;
-  list-style: none;
-  padding: 0;
   counter-reset: my-awesome-counter;
 }
+
+@media only screen and (max-width: 600px) {
+  .themes ul {
+    -webkit-column-count: 1;
+    -moz-column-count: 1;
+    column-count: 1;
+  }
+}
+
 .themes ul li {
   text-align: left;
   width: 100%;
