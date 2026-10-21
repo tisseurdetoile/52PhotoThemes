@@ -1,5 +1,6 @@
 <script>
 import ThemesDisplay from './components/ThemesDisplay.vue'
+import { loadThemes } from './utils/themesLoader.js'
 
 export default {
   name: 'App',
@@ -9,345 +10,63 @@ export default {
   data() {
     return {
       themes: [],
-      year: new Date().getFullYear()
+      // année demandée (année en cours) et année réellement chargée
+      requestedYear: new Date().getFullYear(),
+      year: new Date().getFullYear(),
+      loading: true,
+      error: null
     }
   },
-  mounted() {
-    fetch(`./${this.year}.json`, {
-      headers: { 'Content-type': 'application/json' }
-    })
-      .then((res) => res.json())
-      .then((response) => {
-        this.themes = response
-      })
-      .catch((error) => {
-        console.log(error)
-      })
+  computed: {
+    isFallback() {
+      return this.themes.length > 0 && this.year !== this.requestedYear
+    }
+  },
+  async mounted() {
+    try {
+      const { year, themes } = await loadThemes(this.requestedYear)
+      this.year = year
+      this.themes = themes
+    } catch (error) {
+      console.error(error)
+      this.error = `Impossible de charger les thèmes pour ${this.requestedYear}.`
+    } finally {
+      this.loading = false
+    }
   }
 }
 </script>
 
 <template>
+  <p v-if="isFallback" class="notice" role="status">
+    Les thèmes de {{ requestedYear }} ne sont pas encore disponibles : affichage de ceux de
+    {{ year }}.
+  </p>
   <ThemesDisplay v-if="themes.length > 0" :themes="themes" :year="year" />
+  <p v-else-if="loading" class="status" role="status">Chargement des thèmes…</p>
+  <p v-else-if="error" class="status status--error" role="alert">{{ error }}</p>
 </template>
 
-<style lang="less">
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-::-moz-selection {
-  background-color: rgba(255, 255, 128, 0.2);
-}
-::selection {
-  background-color: rgba(255, 255, 128, 0.2);
-}
-
-#app,
-html {
-  color: #cccccc;
-  background-color: #1a1a1a;
+<style scoped>
+.notice,
+.status {
+  max-width: 40rem;
+  margin: 1.5rem auto 0;
+  padding: 0.75rem 1rem;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  font-size: 0.9rem;
   text-align: center;
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 1.3em;
 }
 
-body {
-  max-width: 1050px;
-  margin: 4.5em auto;
-  padding: 0 1em;
-}
-a,
-a:visited,
-a.active {
-  color: #cccccc;
-}
-h1,
-.logo-guru {
-  color: #ffff80;
-  font-weight: 400;
-  margin-bottom: 0.2em;
-  margin-top: 0.2em;
-  font-size: 1.9em;
-  display: inline-block;
-}
-.text-highlight {
-  color: #ffff80;
-  font-size: 75%;
-  margin-bottom: 10px;
-  margin-top: 25px;
-}
-.text-highlight a {
-  color: #ffff80;
-}
-#banner {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 3em;
-  width: 100%;
-  text-align: left;
-  padding: 0.66em 1em;
-  font-weight: 400;
-  font-family:
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    Arial,
-    'Noto Sans',
-    sans-serif,
-    'Apple Color Emoji',
-    'Segoe UI Emoji',
-    'Segoe UI Symbol',
-    'Noto Color Emoji';
-  color: #fff;
-}
-#banner .wide-container {
-  max-width: 1200px;
-  margin: auto auto;
-  position: relative;
-}
-#banner .cronitor-logo {
-  padding-top: 0.05em;
-  margin-top: 5px;
-}
-#banner .button {
-  position: absolute;
-  right: 0;
-  margin-top: 3px;
-  padding: 6px 12px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 67%;
-  border-radius: 4px;
-  margin-left: 20px;
-  border: 1px solid #00df4d;
-  background-color: inherit;
-  color: #00df4d;
-  box-shadow: 0 5px 10px rgba(0, 223, 77, 0.5);
-}
-#banner .button:hover {
-  box-shadow: 0 5px 10px rgba(0, 223, 77, 0.75);
-}
-#banner a {
-  text-decoration: none;
-}
-.monitoring {
-  font-size: 75%;
-  line-height: 1.5em;
-  color: #fff;
-  max-width: 900px;
-  margin: 0 auto 25px auto;
-}
-.man {
-  font-size: 75%;
-  text-align: left;
-}
-.man .comment {
-  color: #737373;
-  font-style: italic;
-}
-.man i {
-  color: #e6e673;
-}
-select {
-  font-size: 20px;
-  width: 45px;
-  margin-right: 5px;
-}
-div.select {
-  position: relative;
-  display: inline-block;
-  height: 15em;
-}
-div.select label {
-  position: absolute;
-  top: 28px;
-  left: 25px;
-  transform: rotate(45deg);
-  transform-origin: left top 0;
-}
-table {
-  margin-left: auto;
-  margin-right: auto;
-  border-collapse: collapse;
-  border-top: 1px solid #333333;
-  border-bottom: 1px solid #333333;
-  width: 100%;
-  max-width: 400px;
-}
-table th,
-table td {
-  border-top: 1px solid #333333;
-  border-bottom: 1px solid #333333;
-}
-table th {
-  width: 13em;
-  text-align: right;
-  padding: 0.2em 1em 0.2em 0;
-}
-table td {
-  text-align: left;
-  padding: 0.2em 0 0.2em 1em;
+.status {
+  margin-top: 4rem;
 }
 
-.blurb {
-  font-size: 75%;
-  margin-top: 10px;
-  color: #fff !important;
-}
-.blurb a {
-  color: #fff;
-}
-#content {
-  min-height: 500px;
-}
-div.warning {
-  color: saddlebrown;
-  font-size: 75%;
-  height: 0;
-}
-
-.themes ul {
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 100%;
-  width: 100%;
-  background-color: #333333;
-  border: 1px solid #cccccc;
-  border-radius: 0.6em;
-  color: #ffffff;
-  padding-top: 0.075rem;
-  text-align: left;
-  list-style: none;
-  -webkit-column-count: 3;
-  -moz-column-count: 3;
-  column-count: 3;
-  display: inline-block;
-  counter-reset: my-awesome-counter;
-}
-
-@media only screen and (max-width: 600px) {
-  .themes ul {
-    -webkit-column-count: 1;
-    -moz-column-count: 1;
-    column-count: 1;
-  }
-}
-
-.themes ul li {
-  text-align: left;
-  width: 100%;
-  counter-increment: my-awesome-counter;
-}
-
-.themes ul li::before {
-  content: '#' counter(my-awesome-counter) '. ';
-  color: lightgrey;
-  font-weight: bold;
-}
-.clickable {
-  text-decoration: underline;
-  cursor: pointer;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-}
-.part-explanation {
-  font-size: 75%;
-  color: #a8a8a8;
-  height: 24em;
-}
-.part-explanation div {
-  display: inline-block;
-  vertical-align: top;
-  margin: 0 1em 0 0;
-}
-.part-explanation .active {
-  color: #ffff80;
-}
-.part-explanation .invalid {
-  background-color: darkred;
-}
-.part-explanation .warning {
-  background-color: saddlebrown;
-}
-.part-explanation .clickable {
-  border-radius: 1em;
-  padding: 0.1em 0.36em;
-}
-.part-explanation .clickable:last-child {
-  margin: 0;
-}
-.human-readable {
-  font-size: 200%;
-  font-family: Georgia, serif;
-  min-height: 2.2em;
-  display: -ms-flexbox;
-  display: flex;
-  -ms-flex-pack: end;
-  justify-content: flex-end;
-  -ms-flex-line-pack: end;
-  align-content: flex-end;
-  -ms-flex-direction: column;
-  flex-direction: column;
-  margin-bottom: 0.2em;
-  margin-top: 0.9em;
-}
-.human-readable .active {
-  color: #ffff80;
-}
-.next-date {
-  font-size: 75%;
-  margin-left: 0.5em;
-}
-.tips {
-  font-size: 75%;
-  text-align: left;
-  display: inline-block;
-  vertical-align: top;
-  margin-bottom: 3em;
-}
-.tips .title {
-  font-weight: bold;
-}
-.example {
-  text-align: right;
-  font-size: 75%;
-  margin-top: -1em;
-  margin-bottom: 7px;
-}
-#footer {
-  font-size: 75%;
-  margin-top: 40px;
-  width: 100%;
-  max-width: 1200px;
-}
-#footer span {
-  margin: 0 1em;
-}
-@media screen and (max-width: 400px) {
-  .text-editor input {
-    font-size: 200%;
-  }
-  .example {
-    display: none;
-  }
-  .part-explanation .clickable {
-    padding: 0.1em 0.01em;
-    margin: 0 0.2em 0 0;
-  }
-  table {
-    max-width: 360px;
-  }
-  table th {
-    width: 7em;
-  }
+.status--error {
+  color: var(--text);
+  border-color: var(--accent-text);
 }
 </style>

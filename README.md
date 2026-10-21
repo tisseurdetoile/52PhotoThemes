@@ -1,29 +1,48 @@
 # 52phototheme
 
-## Project setup
+Site « une photo par semaine » : 52 thèmes tirés au sort chaque année, avec export agenda (`.ics`).
+Application Vue 3 + Vite, déployée sur GitHub Pages.
+
+## Installation
+
 ```
-yarn install
+npm install
 ```
 
-### Compiles and hot-reloads for development
+## Développement
+
 ```
-yarn serve
+npm run dev       # serveur de dev avec rechargement à chaud
+npm run build     # build de production (dossier dist/)
+npm run preview   # prévisualiser le build
 ```
 
-### Compiles and minifies for production
+## Tests et qualité
+
 ```
-yarn build
+npm test          # tests unitaires (une exécution)
+npm run test:unit # tests unitaires en mode watch
+npm run lint      # ESLint (avec correction automatique)
+npm run format    # Prettier sur src/
 ```
 
-### Run your unit tests
+## Générer les thèmes d'une année
+
+Le script `scripts/generate.mjs` tire 52 thèmes au sort dans `themes.json` et produit
+`<année>.json`, `<année>.ics` et met à jour `ndx.json`.
+
 ```
-yarn test:unit
+npm run generate                       # année prochaine, dans dist/
+npm run generate -- 2027               # une année précise
+npm run generate -- 2027 --out public  # écrire dans public/ (utile en local)
+npm run generate -- 2027 --force       # écraser des fichiers existants
 ```
 
-### Lints and fixes files
-```
-yarn lint
-```
+Les semaines sont les semaines ISO 8601 (du lundi au dimanche, la semaine 1 contient le 4 janvier).
+Chaque thème est placé sur la semaine correspondante de l'année demandée.
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+## Déploiement
+
+- `siteDeploy.yml` : build et déploiement sur la branche `gh-pages` à chaque push sur `main`.
+- `siteUpdateThemes.yml` : génère les thèmes de l'année suivante le 31 décembre. Il peut aussi être
+  lancé à la main, avec une année en paramètre (champ `year`).
