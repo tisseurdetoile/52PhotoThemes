@@ -1,0 +1,82 @@
+/* ------------------------------------------------------------------
+   Styles globaux : variables de thème, reset léger, typographie
+   ------------------------------------------------------------------ */
+
+:root {
+  color-scheme: dark light;
+
+  /* Thème sombre (par défaut) */
+  --bg: #111113;
+  --surface: #1b1b1f;
+  --surface-2: #26262c;
+  --border: #2f2f37;
+  --text: #ececef;
+  --muted: #9b9ba6;
+  --accent: #ffe066;
+  --on-accent: #1a1a1a;
+  --accent-text: #ffe066;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #faf8f4;
+    --surface: #ffffff;
+    --surface-2: #f1eee7;
+    --border: #e4dfd3;
+    --text: #1f1f24;
+    --muted: #6b6b75;
+    --accent: #ffd43b;
+    --accent-text: #8a6400;
+    --shadow: 0 10px 30px rgba(60, 50, 20, 0.12);
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background-color: var(--bg);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--text);
+  background-color: var(--bg);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background-color: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+a {
+  color: var(--accent-text);
+  text-underline-offset: 0.2em;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
