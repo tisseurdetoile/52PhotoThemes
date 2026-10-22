@@ -47,8 +47,12 @@ export default {
     {{ year }}.
   </p>
   <ThemesDisplay v-if="themes.length > 0" :themes="themes" :year="year" />
-  <p v-else-if="loading" class="status" role="status">Chargement des thèmes…</p>
-  <p v-else-if="error" class="status status--error" role="alert">{{ error }}</p>
+  <p v-else-if="loading" class="status" role="status">
+    Chargement des thèmes…
+  </p>
+  <p v-else-if="error" class="status status--error" role="alert">
+    {{ error }}
+  </p>
 </template>
 
 <style scoped>
