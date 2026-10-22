@@ -22,24 +22,51 @@
 
     <section class="themes">
       <h2>Liste des thèmes</h2>
+      <p class="hint">Cliquez sur un thème pour copier ses hashtags Instagram.</p>
+
+      <details v-if="pastEntries.length > 0" class="past" data-test="past-themes">
+        <summary>
+          Semaines précédentes
+          <span class="count">{{ pastEntries.length }}</span>
+        </summary>
+        <ul>
+          <li v-for="entry in pastEntries" :key="entry.number" class="is-past">
+            <button
+              type="button"
+              class="theme"
+              :title="entry.item.description"
+              :aria-label="`Copier les hashtags du thème ${entry.item.summary}`"
+              @click="copyTags(entry)"
+            >
+              <span class="num">{{ entry.number }}</span>
+              <span class="name">{{ entry.item.summary }}</span>
+            </button>
+          </li>
+        </ul>
+      </details>
+
       <ul>
         <li
-          v-for="(item, index) in themes"
-          :key="index"
-          :title="item.description"
-          :class="{
-            'is-current': index + 1 === getWeekNumber,
-            'is-past': index + 1 < getWeekNumber
-          }"
+          v-for="entry in upcomingEntries"
+          :key="entry.number"
+          :class="{ 'is-current': entry.number === getWeekNumber }"
         >
-          <span class="num">{{ index + 1 }}</span>
-          <span class="name">{{ item.summary }}</span>
+          <button
+            type="button"
+            class="theme"
+            :title="entry.item.description"
+            :aria-label="`Copier les hashtags du thème ${entry.item.summary}`"
+            @click="copyTags(entry)"
+          >
+            <span class="num">{{ entry.number }}</span>
+            <span class="name">{{ entry.item.summary }}</span>
+          </button>
         </li>
       </ul>
     </section>
 
     <p class="hashtag">
-      Si vous publiez vos photos, merci d'utiliser le tag <code>#tdt{{ year }}p52</code>
+      Si vous publiez vos photos, merci d'utiliser le tag <code>{{ yearTag }}</code>
     </p>
 
     <p class="actions">
@@ -47,20 +74,46 @@
     </p>
 
     <footer class="footer">
-      <span>
-        Construit avec
-        <a href="https://vuejs.org" target="_blank" rel="noopener">vuejs</a>
-      </span>
-      <span aria-hidden="true">·</span>
-      <a href="http://www.tisseurdetoile.net" target="_blank" rel="noopener"
-        >© Le TisseurDeToile</a
+      <a
+        class="github"
+        href="https://github.com/tisseurdetoile/52PhotoThemes"
+        target="_blank"
+        rel="noopener noreferrer"
       >
+        <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true">
+          <path
+            d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"
+          />
+        </svg>
+        <span>Code source sur GitHub</span>
+      </a>
+
+      <p class="credits">
+        <span>
+          Construit avec
+          <a href="https://vuejs.org" target="_blank" rel="noopener">vuejs</a>
+        </span>
+        <span aria-hidden="true">·</span>
+        <a href="http://www.tisseurdetoile.net" target="_blank" rel="noopener"
+          >© Le TisseurDeToile</a
+        >
+      </p>
     </footer>
+
+    <div class="toast-region" role="status" aria-live="polite">
+      <Transition name="toast">
+        <p v-if="toast" class="toast" data-test="toast">{{ toast }}</p>
+      </Transition>
+    </div>
   </div>
 </template>
 
 <script>
 import { getThemeWeek } from '../utils/weeks.mjs'
+import { buildHashtags, yearHashtag } from '../utils/hashtags.js'
+import { copyToClipboard } from '../utils/clipboard.js'
+
+const TOAST_DURATION_MS = 2500
 
 export default {
   name: 'ThemesDisplay',
@@ -73,9 +126,18 @@ export default {
       default: () => new Date()
     }
   },
+  data() {
+    return {
+      toast: '',
+      toastTimer: null
+    }
+  },
   computed: {
     icsUrl() {
       return `./${this.year}.ics`
+    },
+    yearTag() {
+      return yearHashtag(this.year)
     },
     // Position (1 à 52) de la semaine courante dans la liste des thèmes
     getWeekNumber() {
@@ -83,6 +145,40 @@ export default {
     },
     currentTheme() {
       return this.themes[this.getWeekNumber - 1]
+    },
+    // Thèmes des semaines déjà passées (regroupés dans un bloc replié)
+    pastEntries() {
+      return this.themes
+        .slice(0, this.getWeekNumber - 1)
+        .map((item, index) => ({ item, number: index + 1 }))
+    },
+    // Semaine courante et semaines à venir
+    upcomingEntries() {
+      const first = this.getWeekNumber - 1
+      return this.themes.slice(first).map((item, index) => ({ item, number: first + index + 1 }))
+    }
+  },
+  beforeUnmount() {
+    clearTimeout(this.toastTimer)
+  },
+  methods: {
+    // Copie « #tdt<année>p52 #<titre du thème> » dans le presse-papier
+    async copyTags(entry) {
+      const text = buildHashtags(this.year, entry.item.summary, ['#52photos'])
+      try {
+        await copyToClipboard(text)
+        this.notify(`Copié : ${text}`)
+      } catch (error) {
+        console.error(error)
+        this.notify('Copie impossible')
+      }
+    },
+    notify(message) {
+      clearTimeout(this.toastTimer)
+      this.toast = message
+      this.toastTimer = setTimeout(() => {
+        this.toast = ''
+      }, TOAST_DURATION_MS)
     }
   }
 }
@@ -170,12 +266,18 @@ h1 {
 
 /* --- Liste des thèmes -------------------------------------------- */
 h2 {
-  margin: 0 0 1.25rem;
+  margin: 0 0 0.5rem;
   color: var(--muted);
   font-size: 0.85rem;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+}
+
+.hint {
+  margin: 0 0 1.25rem;
+  color: var(--muted);
+  font-size: 0.85rem;
 }
 
 .themes ul {
@@ -189,10 +291,6 @@ h2 {
 }
 
 .themes li {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.55rem 0.85rem 0.55rem 0.6rem;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 0.85rem;
@@ -206,6 +304,31 @@ h2 {
   border-color: var(--accent-text);
   transform: translateY(-1px);
   opacity: 1;
+}
+
+/* Chaque thème est un bouton qui copie ses hashtags */
+.theme {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.55rem 0.85rem 0.55rem 0.6rem;
+  color: inherit;
+  background: none;
+  border: 0;
+  border-radius: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.theme:active {
+  transform: scale(0.98);
+}
+
+.theme:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
 .num {
@@ -229,6 +352,77 @@ h2 {
 
 .name::first-letter {
   text-transform: uppercase;
+}
+
+/* Regroupement replié des semaines passées */
+.past {
+  margin-bottom: 1.25rem;
+  text-align: left;
+}
+
+.past summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  width: fit-content;
+  margin: 0 auto;
+  padding: 0.5rem 1.1rem;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.past summary::-webkit-details-marker {
+  display: none;
+}
+
+.past summary::before {
+  content: '';
+  width: 0.45rem;
+  height: 0.45rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease;
+}
+
+.past[open] summary::before {
+  transform: rotate(45deg);
+}
+
+.past summary:hover {
+  color: var(--text);
+  border-color: var(--accent-text);
+}
+
+.past summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.count {
+  min-width: 1.6rem;
+  padding: 0 0.4rem;
+  color: var(--on-accent);
+  background: var(--accent);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.past ul {
+  margin-top: 1rem;
 }
 
 .themes li.is-past {
@@ -291,13 +485,50 @@ code {
 /* --- Pied de page ------------------------------------------------ */
 .footer {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 0.75rem;
-  justify-content: center;
-  padding-top: 1.5rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding-top: 1.75rem;
   color: var(--muted);
   border-top: 1px solid var(--border);
   font-size: 0.85rem;
+}
+
+.credits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  justify-content: center;
+  margin: 0;
+}
+
+/* Lien vers le dépôt GitHub */
+.footer .github {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.5rem 1.1rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.footer .github svg {
+  flex: none;
+}
+
+.footer .github:hover {
+  color: var(--accent-text);
+  border-color: var(--accent-text);
+  transform: translateY(-1px);
 }
 
 .footer a {
@@ -306,5 +537,43 @@ code {
 
 .footer a:hover {
   color: var(--accent-text);
+}
+
+/* --- Confirmation de copie --------------------------------------- */
+.toast-region {
+  position: fixed;
+  right: 1rem;
+  bottom: 1.5rem;
+  left: 1rem;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.toast {
+  max-width: 100%;
+  margin: 0;
+  padding: 0.65rem 1.2rem;
+  color: var(--bg);
+  background: var(--text);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  font-size: 0.9rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.toast-enter-active,
+.toast-leave-active {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translateY(0.5rem);
 }
 </style>
