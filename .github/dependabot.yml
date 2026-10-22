@@ -1,0 +1,11 @@
+version: 2
+updates:
+  # Garde les versions des actions GitHub à jour (une pull request par mois au maximum)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"

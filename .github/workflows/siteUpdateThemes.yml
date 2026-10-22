@@ -1,4 +1,5 @@
 name: Update Themes
+
 on:
   workflow_dispatch:
     inputs:
@@ -7,28 +8,51 @@ on:
         required: false
         type: string
   schedule:
-    - cron: '5 0 31 12 *'
+    - cron: "5 0 31 12 *"
+
+# Droits minimaux par défaut : seul le job de déploiement peut écrire (branche gh-pages)
+permissions:
+  contents: read
+
+# Un seul déploiement à la fois sur gh-pages (partagé avec « Build and Deploy »)
+concurrency:
+  group: gh-pages-deploy
+  cancel-in-progress: false
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
     steps:
-      - name: Checkout 🛎️
-        uses: actions/checkout@v2.3.1 # If you're using actions/checkout@v2 you must set persist-credentials to false in most cases for the deployment to work correctly.
+      - name: Checkout
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
-      - name: Install and Build 🔧 # This example project is built using npm and outputs the result to the 'build' folder. Replace with the commands required to build your project, or remove this step entirely if your site is pre-built.
-        env:
-          YEAR: ${{ inputs.year }}
-        run: |
-          npm install
-          npm run build
-          npm run generate -- $YEAR
-
-      - name: Deploy 🚀
-        uses: JamesIves/github-pages-deploy-action@3.7.1
+      - name: Setup Node
+        uses: actions/setup-node@v6
         with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BRANCH: gh-pages # The branch the action should deploy to.
-          FOLDER: dist # The folder the action should deploy.
-          CLEAN: false # Automatically remove deleted files from the deploy branch
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Test
+        run: npm test
+
+      - name: Build and Generate
+        env:
+          YEAR: ${{ inputs.year }} # passé par variable d'environnement (pas d'injection dans le script)
+        run: |
+          npm run build
+          npm run generate -- "$YEAR"
+
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages # branche de destination
+          folder: dist # dossier à publier
+          clean: false # conserve les fichiers des années précédentes déjà présents sur gh-pages

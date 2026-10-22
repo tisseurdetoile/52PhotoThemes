@@ -5,7 +5,10 @@ Application Vue 3 + Vite, déployée sur GitHub Pages.
 
 ## Installation
 
+Node 22 (version indiquée dans `.nvmrc`, utilisée aussi par le CI) :
+
 ```
+nvm use   # optionnel
 npm install
 ```
 

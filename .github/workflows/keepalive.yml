@@ -1,23 +1,37 @@
 name: Keep-Alive
+
+# GitHub désactive les workflows planifiés d'un dépôt sans activité pendant 60 jours.
+# Ce commit mensuel évite que « Update Themes » (31 décembre) soit désactivé.
 on:
   schedule:
     - cron: "42 0 1 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
 jobs:
   keep_alive:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write # nécessaire pour pousser le commit
     steps:
-    - uses: actions/checkout@v2
-    - name: Add or update .keepalive
-      run: echo $(date +'%s') > .keepalive
-    - name: Commit .keepalive
-      run: |
-        git config --local user.email "actions@github.com"
-        git config --local user.name "GitHub Actions"
-        if [ -n "$(git status --porcelain)" ]; then
-          git add .keepalive
-          git commit -m "Still alive on $(date +'%B %d, %Y %T (%Z)')"
-          git push origin $(git branch --show-current)
-        else
-          echo "Oops, seems the keep-alive failed!"
-          exit 1
-        fi
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Add or update .keepalive
+        run: date +'%s' > .keepalive
+
+      - name: Commit .keepalive
+        run: |
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          if [ -n "$(git status --porcelain)" ]; then
+            git add .keepalive
+            git commit -m "Still alive on $(date +'%B %d, %Y %T (%Z)')"
+            git push
+          else
+            echo "Oops, seems the keep-alive failed!"
+            exit 1
+          fi
