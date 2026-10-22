@@ -22,18 +22,34 @@
 
     <section class="themes">
       <h2>Liste des thèmes</h2>
+
+      <details v-if="pastEntries.length > 0" class="past" data-test="past-themes">
+        <summary>
+          Semaines précédentes
+          <span class="count">{{ pastEntries.length }}</span>
+        </summary>
+        <ul>
+          <li
+            v-for="entry in pastEntries"
+            :key="entry.number"
+            :title="entry.item.description"
+            class="is-past"
+          >
+            <span class="num">{{ entry.number }}</span>
+            <span class="name">{{ entry.item.summary }}</span>
+          </li>
+        </ul>
+      </details>
+
       <ul>
         <li
-          v-for="(item, index) in themes"
-          :key="index"
-          :title="item.description"
-          :class="{
-            'is-current': index + 1 === getWeekNumber,
-            'is-past': index + 1 < getWeekNumber
-          }"
+          v-for="entry in upcomingEntries"
+          :key="entry.number"
+          :title="entry.item.description"
+          :class="{ 'is-current': entry.number === getWeekNumber }"
         >
-          <span class="num">{{ index + 1 }}</span>
-          <span class="name">{{ item.summary }}</span>
+          <span class="num">{{ entry.number }}</span>
+          <span class="name">{{ entry.item.summary }}</span>
         </li>
       </ul>
     </section>
@@ -83,6 +99,17 @@ export default {
     },
     currentTheme() {
       return this.themes[this.getWeekNumber - 1]
+    },
+    // Thèmes des semaines déjà passées (regroupés dans un bloc replié)
+    pastEntries() {
+      return this.themes
+        .slice(0, this.getWeekNumber - 1)
+        .map((item, index) => ({ item, number: index + 1 }))
+    },
+    // Semaine courante et semaines à venir
+    upcomingEntries() {
+      const first = this.getWeekNumber - 1
+      return this.themes.slice(first).map((item, index) => ({ item, number: first + index + 1 }))
     }
   }
 }
@@ -229,6 +256,77 @@ h2 {
 
 .name::first-letter {
   text-transform: uppercase;
+}
+
+/* Regroupement replié des semaines passées */
+.past {
+  margin-bottom: 1.25rem;
+  text-align: left;
+}
+
+.past summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  width: fit-content;
+  margin: 0 auto;
+  padding: 0.5rem 1.1rem;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.past summary::-webkit-details-marker {
+  display: none;
+}
+
+.past summary::before {
+  content: '';
+  width: 0.45rem;
+  height: 0.45rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease;
+}
+
+.past[open] summary::before {
+  transform: rotate(45deg);
+}
+
+.past summary:hover {
+  color: var(--text);
+  border-color: var(--accent-text);
+}
+
+.past summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.count {
+  min-width: 1.6rem;
+  padding: 0 0.4rem;
+  color: var(--on-accent);
+  background: var(--accent);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.past ul {
+  margin-top: 1rem;
 }
 
 .themes li.is-past {

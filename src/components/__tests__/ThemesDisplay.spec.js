@@ -66,6 +66,41 @@ describe('ThemesDisplay', () => {
     expect(wrapper.findAll('.themes li.is-past')).toHaveLength(42)
   })
 
+  it('regroupe les semaines passées dans un bloc replié par défaut', () => {
+    const wrapper = factory(new Date(2026, 9, 21)) // semaine 43 → 42 semaines passées
+    const past = wrapper.get('[data-test="past-themes"]')
+    expect(past.element.tagName).toBe('DETAILS')
+    expect(past.attributes('open')).toBeUndefined()
+    expect(past.get('summary').text()).toContain('Semaines précédentes')
+    expect(past.get('summary').text()).toContain('42')
+    expect(past.findAll('li')).toHaveLength(42)
+  })
+
+  it('ne met dans le regroupement que les semaines passées, dans l’ordre', () => {
+    const wrapper = factory(new Date(2026, 9, 21))
+    const numbers = wrapper
+      .get('[data-test="past-themes"]')
+      .findAll('.num')
+      .map((n) => n.text())
+    expect(numbers[0]).toBe('1')
+    expect(numbers[numbers.length - 1]).toBe('42')
+  })
+
+  it('affiche la semaine courante puis les semaines à venir hors du regroupement', () => {
+    const wrapper = factory(new Date(2026, 9, 21))
+    const visible = wrapper.findAll('.themes > ul > li')
+    expect(visible).toHaveLength(10) // semaines 43 à 52
+    expect(visible[0].classes()).toContain('is-current')
+    expect(visible[0].get('.num').text()).toBe('43')
+    expect(visible[9].get('.num').text()).toBe('52')
+  })
+
+  it("n'affiche pas de regroupement en première semaine de l'année", () => {
+    const wrapper = factory(new Date(2026, 0, 1)) // semaine 1
+    expect(wrapper.find('[data-test="past-themes"]').exists()).toBe(false)
+    expect(wrapper.findAll('.themes > ul > li')).toHaveLength(52)
+  })
+
   it("affiche le tag à utiliser pour l'année", () => {
     const wrapper = factory(new Date(2026, 9, 21))
     expect(wrapper.get('code').text()).toBe('#tdt2026p52')
