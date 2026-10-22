@@ -22,6 +22,7 @@
 
     <section class="themes">
       <h2>Liste des thèmes</h2>
+      <p class="hint">Cliquez sur un thème pour copier ses hashtags Instagram.</p>
 
       <details v-if="pastEntries.length > 0" class="past" data-test="past-themes">
         <summary>
@@ -29,14 +30,17 @@
           <span class="count">{{ pastEntries.length }}</span>
         </summary>
         <ul>
-          <li
-            v-for="entry in pastEntries"
-            :key="entry.number"
-            :title="entry.item.description"
-            class="is-past"
-          >
-            <span class="num">{{ entry.number }}</span>
-            <span class="name">{{ entry.item.summary }}</span>
+          <li v-for="entry in pastEntries" :key="entry.number" class="is-past">
+            <button
+              type="button"
+              class="theme"
+              :title="entry.item.description"
+              :aria-label="`Copier les hashtags du thème ${entry.item.summary}`"
+              @click="copyTags(entry)"
+            >
+              <span class="num">{{ entry.number }}</span>
+              <span class="name">{{ entry.item.summary }}</span>
+            </button>
           </li>
         </ul>
       </details>
@@ -45,17 +49,24 @@
         <li
           v-for="entry in upcomingEntries"
           :key="entry.number"
-          :title="entry.item.description"
           :class="{ 'is-current': entry.number === getWeekNumber }"
         >
-          <span class="num">{{ entry.number }}</span>
-          <span class="name">{{ entry.item.summary }}</span>
+          <button
+            type="button"
+            class="theme"
+            :title="entry.item.description"
+            :aria-label="`Copier les hashtags du thème ${entry.item.summary}`"
+            @click="copyTags(entry)"
+          >
+            <span class="num">{{ entry.number }}</span>
+            <span class="name">{{ entry.item.summary }}</span>
+          </button>
         </li>
       </ul>
     </section>
 
     <p class="hashtag">
-      Si vous publiez vos photos, merci d'utiliser le tag <code>#tdt{{ year }}p52</code>
+      Si vous publiez vos photos, merci d'utiliser le tag <code>{{ yearTag }}</code>
     </p>
 
     <p class="actions">
@@ -72,11 +83,21 @@
         >© Le TisseurDeToile</a
       >
     </footer>
+
+    <div class="toast-region" role="status" aria-live="polite">
+      <Transition name="toast">
+        <p v-if="toast" class="toast" data-test="toast">{{ toast }}</p>
+      </Transition>
+    </div>
   </div>
 </template>
 
 <script>
 import { getThemeWeek } from '../utils/weeks.mjs'
+import { buildHashtags, yearHashtag } from '../utils/hashtags.js'
+import { copyToClipboard } from '../utils/clipboard.js'
+
+const TOAST_DURATION_MS = 2500
 
 export default {
   name: 'ThemesDisplay',
@@ -89,9 +110,18 @@ export default {
       default: () => new Date()
     }
   },
+  data() {
+    return {
+      toast: '',
+      toastTimer: null
+    }
+  },
   computed: {
     icsUrl() {
       return `./${this.year}.ics`
+    },
+    yearTag() {
+      return yearHashtag(this.year)
     },
     // Position (1 à 52) de la semaine courante dans la liste des thèmes
     getWeekNumber() {
@@ -110,6 +140,29 @@ export default {
     upcomingEntries() {
       const first = this.getWeekNumber - 1
       return this.themes.slice(first).map((item, index) => ({ item, number: first + index + 1 }))
+    }
+  },
+  beforeUnmount() {
+    clearTimeout(this.toastTimer)
+  },
+  methods: {
+    // Copie « #tdt<année>p52 #<titre du thème> » dans le presse-papier
+    async copyTags(entry) {
+      const text = buildHashtags(this.year, entry.item.summary, ['#52photos'])
+      try {
+        await copyToClipboard(text)
+        this.notify(`Copié : ${text}`)
+      } catch (error) {
+        console.error(error)
+        this.notify('Copie impossible')
+      }
+    },
+    notify(message) {
+      clearTimeout(this.toastTimer)
+      this.toast = message
+      this.toastTimer = setTimeout(() => {
+        this.toast = ''
+      }, TOAST_DURATION_MS)
     }
   }
 }
@@ -197,12 +250,18 @@ h1 {
 
 /* --- Liste des thèmes -------------------------------------------- */
 h2 {
-  margin: 0 0 1.25rem;
+  margin: 0 0 0.5rem;
   color: var(--muted);
   font-size: 0.85rem;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+}
+
+.hint {
+  margin: 0 0 1.25rem;
+  color: var(--muted);
+  font-size: 0.85rem;
 }
 
 .themes ul {
@@ -216,10 +275,6 @@ h2 {
 }
 
 .themes li {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.55rem 0.85rem 0.55rem 0.6rem;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 0.85rem;
@@ -233,6 +288,31 @@ h2 {
   border-color: var(--accent-text);
   transform: translateY(-1px);
   opacity: 1;
+}
+
+/* Chaque thème est un bouton qui copie ses hashtags */
+.theme {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.55rem 0.85rem 0.55rem 0.6rem;
+  color: inherit;
+  background: none;
+  border: 0;
+  border-radius: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.theme:active {
+  transform: scale(0.98);
+}
+
+.theme:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
 .num {
@@ -404,5 +484,43 @@ code {
 
 .footer a:hover {
   color: var(--accent-text);
+}
+
+/* --- Confirmation de copie --------------------------------------- */
+.toast-region {
+  position: fixed;
+  right: 1rem;
+  bottom: 1.5rem;
+  left: 1rem;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.toast {
+  max-width: 100%;
+  margin: 0;
+  padding: 0.65rem 1.2rem;
+  color: var(--bg);
+  background: var(--text);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  font-size: 0.9rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.toast-enter-active,
+.toast-leave-active {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translateY(0.5rem);
 }
 </style>

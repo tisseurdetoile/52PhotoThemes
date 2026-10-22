@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { mount, flushPromises } from '@vue/test-utils'
 import ThemesDisplay from '../ThemesDisplay.vue'
 
 const themes = Array.from({ length: 52 }, (_, i) => ({
@@ -111,5 +111,80 @@ describe('ThemesDisplay', () => {
     await wrapper.vm.$nextTick()
     const link = wrapper.findAll('a').find((a) => a.text().includes('agenda'))
     expect(link.attributes('href')).toBe('./2026.ics')
+  })
+})
+
+describe('ThemesDisplay - copie des hashtags', () => {
+  const writeText = vi.fn()
+
+  beforeEach(() => {
+    writeText.mockReset()
+    writeText.mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true
+    })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('rend chaque thème cliquable via un bouton', () => {
+    const wrapper = factory(new Date(2026, 9, 21))
+    expect(wrapper.findAll('.themes li button')).toHaveLength(52)
+  })
+
+  it("copie le hashtag de l'année puis celui du thème au clic", async () => {
+    const wrapper = factory(new Date(2026, 9, 21))
+    await wrapper.get('.themes > ul > li.is-current button').trigger('click')
+    await flushPromises()
+    expect(writeText).toHaveBeenCalledTimes(1)
+    expect(writeText).toHaveBeenCalledWith('#tdt2026p52 #theme43 #52photos')
+  })
+
+  it('fonctionne aussi pour un thème déjà passé (bloc replié)', async () => {
+    const wrapper = factory(new Date(2026, 9, 21))
+    await wrapper.get('[data-test="past-themes"] li button').trigger('click')
+    await flushPromises()
+    expect(writeText).toHaveBeenCalledWith('#tdt2026p52 #theme1 #52photos')
+  })
+
+  it('utilise l’année affichée et normalise le titre (accents, espaces)', async () => {
+    const custom = themes.map((t, i) => (i === 42 ? { ...t, summary: 'Éclairage naturel' } : t))
+    const wrapper = mount(ThemesDisplay, {
+      props: { themes: custom, year: 2023, today: new Date(2026, 9, 21) }
+    })
+    await wrapper.get('.themes > ul > li.is-current button').trigger('click')
+    await flushPromises()
+    expect(writeText).toHaveBeenCalledWith('#tdt2023p52 #eclairagenaturel #52photos')
+  })
+
+  it('confirme la copie avec un message', async () => {
+    const wrapper = factory(new Date(2026, 9, 21))
+    expect(wrapper.find('[data-test="toast"]').exists()).toBe(false)
+    await wrapper.get('.themes > ul > li.is-current button').trigger('click')
+    await flushPromises()
+    expect(wrapper.get('[data-test="toast"]').text()).toBe('Copié : #tdt2026p52 #theme43 #52photos')
+  })
+
+  it('fait disparaître le message après quelques secondes', async () => {
+    vi.useFakeTimers()
+    const wrapper = factory(new Date(2026, 9, 21))
+    await wrapper.get('.themes > ul > li.is-current button').trigger('click')
+    await vi.advanceTimersByTimeAsync(0)
+    expect(wrapper.find('[data-test="toast"]').exists()).toBe(true)
+    await vi.advanceTimersByTimeAsync(3000)
+    expect(wrapper.find('[data-test="toast"]').exists()).toBe(false)
+  })
+
+  it('signale un échec de copie', async () => {
+    writeText.mockRejectedValue(new Error('refusé'))
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const wrapper = factory(new Date(2026, 9, 21))
+    await wrapper.get('.themes > ul > li.is-current button').trigger('click')
+    await flushPromises()
+    expect(wrapper.get('[data-test="toast"]').text()).toBe('Copie impossible')
+    errorSpy.mockRestore()
   })
 })
