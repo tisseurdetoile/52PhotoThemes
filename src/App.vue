@@ -1,6 +1,7 @@
 <script>
 import ThemesDisplay from './components/ThemesDisplay.vue'
 import { loadThemes } from './utils/themesLoader.js'
+import { getISOWeek } from './utils/weeks.mjs'
 
 export default {
   name: 'App',
@@ -8,11 +9,14 @@ export default {
     ThemesDisplay
   },
   data() {
+    // Année du projet = année ISO : la semaine 1 peut commencer fin décembre
+    // et la dernière semaine finir début janvier
+    const isoYear = getISOWeek(new Date()).year
     return {
       themes: [],
-      // année demandée (année en cours) et année réellement chargée
-      requestedYear: new Date().getFullYear(),
-      year: new Date().getFullYear(),
+      // année demandée et année réellement chargée
+      requestedYear: isoYear,
+      year: isoYear,
       loading: true,
       error: null
     }

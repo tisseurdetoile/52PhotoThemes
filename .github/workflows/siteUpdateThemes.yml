@@ -8,7 +8,7 @@ on:
         required: false
         type: string
   schedule:
-    - cron: "5 0 31 12 *"
+    - cron: "5 0 1 12 *" # 1er décembre : la semaine 1 de l'année ISO suivante peut commencer dès le 29 décembre
 
 # Droits minimaux par défaut : seul le job de déploiement peut écrire (branche gh-pages)
 permissions:

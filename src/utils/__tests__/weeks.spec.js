@@ -5,7 +5,6 @@ import {
   getISOWeeksInYear,
   getISOWeekStart,
   getISOWeekRange,
-  getThemeWeek,
   toDateArray
 } from '../weeks.mjs'
 
@@ -120,35 +119,6 @@ describe('getISOWeekRange', () => {
           expect(fmt(start), `${year} S${week}`).toBe(fmt(nextDay))
         }
         previousEnd = end
-      }
-    }
-  })
-})
-
-describe('getThemeWeek', () => {
-  it.each([
-    [[2026, 0, 1], 1],
-    [[2026, 9, 21], 43],
-    [[2021, 0, 1], 1], // semaine 53 de 2020 → on retombe sur le thème 1 de 2021
-    [[2021, 0, 3], 1],
-    [[2023, 0, 1], 1], // semaine 52 de 2022 → thème 1 de 2023
-    [[2024, 11, 30], 52], // semaine 1 de 2025 → dernier thème de 2024
-    [[2020, 11, 31], 52], // semaine 53 → plafonnée à 52
-    [[2026, 11, 28], 52], // semaine 53 de 2026 → plafonnée à 52
-    [[2026, 11, 31], 52]
-  ])('%j → thème %i', (ymd, expected) => {
-    expect(getThemeWeek(new Date(...ymd))).toBe(expected)
-  })
-
-  it('reste toujours entre 1 et 52 et ne régresse jamais dans une année', () => {
-    for (const year of [2020, 2021, 2023, 2024, 2025, 2026]) {
-      let previous = 0
-      for (let d = new Date(year, 0, 1); d.getFullYear() === year; d.setDate(d.getDate() + 1)) {
-        const w = getThemeWeek(d)
-        expect(w).toBeGreaterThanOrEqual(1)
-        expect(w).toBeLessThanOrEqual(52)
-        expect(w).toBeGreaterThanOrEqual(previous)
-        previous = w
       }
     }
   })

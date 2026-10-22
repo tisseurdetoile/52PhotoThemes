@@ -8,6 +8,9 @@
 
 const MS_PER_DAY = 86400000
 
+/** Libellé de la semaine 53 (années à 53 semaines ISO), qui n'a pas de thème tiré au sort */
+export const BONUS_WEEK_LABEL = 'Semaine bonus : thème libre'
+
 /**
  * Numéro de semaine ISO et année ISO d'une date.
  * Attention : l'année ISO peut différer de l'année civile
@@ -60,23 +63,6 @@ export function getISOWeekRange(week, year) {
   const end = new Date(start)
   end.setDate(end.getDate() + 6)
   return { start, end }
-}
-
-/**
- * Position (1 à 52) de la semaine d'une date dans la liste des 52 thèmes
- * de l'année civile de cette date.
- * - début janvier appartenant à la dernière semaine ISO de l'année précédente → 1
- * - fin décembre appartenant à la semaine 1 de l'année suivante → 52
- * - semaine 53 → 52 (on n'a que 52 thèmes)
- * @param {Date} date
- * @returns {number}
- */
-export function getThemeWeek(date) {
-  const { week, year } = getISOWeek(date)
-  const calendarYear = date.getFullYear()
-  if (year < calendarYear) return 1
-  if (year > calendarYear) return 52
-  return Math.min(week, 52)
 }
 
 /**

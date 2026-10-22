@@ -5,9 +5,9 @@
       <h1>Thèmes pour une photo par semaine en {{ year }}</h1>
     </header>
 
-    <section v-if="currentTheme" class="current" data-test="current-week">
+    <section v-if="currentTheme || isBonusWeek" class="current" data-test="current-week">
       <p class="current__label" data-test="week-number">Semaine {{ getWeekNumber }}</p>
-      <p class="current__theme" data-test="theme">{{ currentTheme.summary }}</p>
+      <p class="current__theme" data-test="theme">{{ currentLabel }}</p>
     </section>
 
     <p class="intro">
@@ -45,7 +45,7 @@
         </ul>
       </details>
 
-      <ul>
+      <ul v-if="upcomingEntries.length > 0">
         <li
           v-for="entry in upcomingEntries"
           :key="entry.number"
@@ -109,7 +109,7 @@
 </template>
 
 <script>
-import { getThemeWeek } from '../utils/weeks.mjs'
+import { getISOWeek, BONUS_WEEK_LABEL } from '../utils/weeks.mjs'
 import { buildHashtags, yearHashtag } from '../utils/hashtags.js'
 import { copyToClipboard } from '../utils/clipboard.js'
 
@@ -139,12 +139,19 @@ export default {
     yearTag() {
       return yearHashtag(this.year)
     },
-    // Position (1 à 52) de la semaine courante dans la liste des thèmes
+    // Numéro de semaine ISO (1 à 52, ou 53 les années à 53 semaines)
     getWeekNumber() {
-      return getThemeWeek(this.today)
+      return getISOWeek(this.today).week
+    },
+    // La semaine 53 n'a pas de thème : c'est une semaine bonus
+    isBonusWeek() {
+      return this.themes.length > 0 && this.getWeekNumber > this.themes.length
     },
     currentTheme() {
       return this.themes[this.getWeekNumber - 1]
+    },
+    currentLabel() {
+      return this.isBonusWeek ? BONUS_WEEK_LABEL : this.currentTheme?.summary
     },
     // Thèmes des semaines déjà passées (regroupés dans un bloc replié)
     pastEntries() {

@@ -42,10 +42,12 @@ npm run generate -- 2027 --force       # écraser des fichiers existants
 ```
 
 Les semaines sont les semaines ISO 8601 (du lundi au dimanche, la semaine 1 contient le 4 janvier).
-Chaque thème est placé sur la semaine correspondante de l'année demandée.
+Chaque thème est placé sur la semaine correspondante de l'année demandée. L'année du projet est
+l'année ISO : la semaine 1 peut commencer fin décembre, et les années à 53 semaines (2026, 2032…)
+ont une semaine bonus « thème libre » en semaine 53, présente aussi dans l'agenda.
 
 ## Déploiement
 
 - `siteDeploy.yml` : build et déploiement sur la branche `gh-pages` à chaque push sur `main`.
-- `siteUpdateThemes.yml` : génère les thèmes de l'année suivante le 31 décembre. Il peut aussi être
+- `siteUpdateThemes.yml` : génère les thèmes de l'année suivante le 1er décembre. Il peut aussi être
   lancé à la main, avec une année en paramètre (champ `year`).

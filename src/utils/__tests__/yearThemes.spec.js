@@ -68,4 +68,21 @@ describe('buildYear', () => {
     expect(events[0].start).toEqual([2025, 12, 29])
     expect(events[1].start).toEqual([2026, 1, 4])
   })
+
+  it('ajoute une semaine bonus (semaine 53) les années ISO à 53 semaines', () => {
+    const { themes, events } = buildYear(makeThemes(52), 2026, () => 0)
+    expect(themes).toHaveLength(52) // pas de 53e thème
+    expect(events).toHaveLength(106)
+    // semaine 53 de 2026 : du lundi 28 décembre 2026 au dimanche 3 janvier 2027
+    expect(events[104].start).toEqual([2026, 12, 28])
+    expect(events[104].title).toBe('Semaine bonus : thème libre')
+    expect(events[105].start).toEqual([2027, 1, 3])
+    expect(events[105].title).toBe('FIN Semaine bonus : thème libre')
+  })
+
+  it("n'ajoute pas de semaine bonus les années ISO à 52 semaines", () => {
+    const { events } = buildYear(makeThemes(52), 2027, () => 0)
+    expect(events).toHaveLength(104)
+    expect(events.some((e) => e.title.includes('bonus'))).toBe(false)
+  })
 })

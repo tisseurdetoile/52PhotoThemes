@@ -1,13 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import ThemesDisplay from '../ThemesDisplay.vue'
+import { getISOWeek } from '../../utils/weeks.mjs'
 
 const themes = Array.from({ length: 52 }, (_, i) => ({
   summary: `Theme ${i + 1}`,
   description: `Description ${i + 1}`
 }))
 
-const factory = (today, year = today.getFullYear()) =>
+// L'année du projet est l'année ISO de la date (la semaine 1 peut commencer fin décembre)
+const factory = (today, year = getISOWeek(today).year) =>
   mount(ThemesDisplay, { props: { themes, year, today } })
 
 /** Texte de la semaine et du thème mis en avant */
@@ -37,14 +39,34 @@ describe('ThemesDisplay', () => {
     expect(current(factory(new Date(2026, 9, 19))).week).toBe('Semaine 43')
   })
 
-  it("utilise le thème 1 pour les premiers jours de l'année rattachés à la semaine 53 précédente", () => {
-    const wrapper = factory(new Date(2021, 0, 3))
+  it("rattache fin décembre à la semaine 1 de l'année ISO suivante", () => {
+    const wrapper = factory(new Date(2025, 11, 29)) // lundi : début de la semaine 1 de 2026
     expect(current(wrapper)).toEqual({ week: 'Semaine 1', theme: 'Theme 1' })
+    expect(wrapper.find('h1').text()).toContain('2026')
+    expect(wrapper.get('code').text()).toBe('#tdt2026p52')
   })
 
-  it("ne plante pas lors d'une année à 53 semaines (utilise le thème 52)", () => {
-    const wrapper = factory(new Date(2026, 11, 31))
-    expect(current(wrapper)).toEqual({ week: 'Semaine 52', theme: 'Theme 52' })
+  it("garde l'année ISO précédente pour les premiers jours de janvier de la semaine 53", () => {
+    const wrapper = factory(new Date(2021, 0, 3)) // dimanche : semaine 53 de 2020
+    expect(wrapper.find('h1').text()).toContain('2020')
+    expect(current(wrapper).week).toBe('Semaine 53')
+  })
+
+  it('affiche une semaine bonus en semaine 53 (année à 53 semaines)', () => {
+    const wrapper = factory(new Date(2026, 11, 31)) // jeudi : semaine 53 de 2026
+    expect(current(wrapper)).toEqual({
+      week: 'Semaine 53',
+      theme: 'Semaine bonus : thème libre'
+    })
+    // les 52 thèmes sont passés : tout est dans le bloc replié, rien à venir
+    expect(wrapper.get('[data-test="past-themes"]').findAll('li')).toHaveLength(52)
+    expect(wrapper.findAll('.themes > ul')).toHaveLength(0)
+  })
+
+  it('revient au thème 1 dès le lundi de la semaine 1 suivante', () => {
+    const wrapper = factory(new Date(2027, 0, 4))
+    expect(current(wrapper)).toEqual({ week: 'Semaine 1', theme: 'Theme 1' })
+    expect(wrapper.find('h1').text()).toContain('2027')
   })
 
   it("n'affiche pas de semaine courante quand il n'y a aucun thème", () => {

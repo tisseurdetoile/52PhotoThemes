@@ -1,4 +1,9 @@
-import { getISOWeekRange, toDateArray } from './weeks.mjs'
+import {
+  BONUS_WEEK_LABEL,
+  getISOWeekRange,
+  getISOWeeksInYear,
+  toDateArray
+} from './weeks.mjs'
 import { SEASONS, getSeasonWeeks } from './seasons.mjs'
 
 /** Nombre de thèmes (= de semaines) d'une année du projet photo 52 */
@@ -71,7 +76,8 @@ export function placeBySeason(themes, year, random = Math.random) {
 /**
  * Tire 52 thèmes au sort et construit les données d'une année :
  * - `themes` : la liste affichée par l'application (thème i → semaine ISO i + 1)
- * - `events` : les évènements agenda (début le lundi, fin le dimanche de chaque semaine)
+ * - `events` : les évènements agenda (début le lundi, fin le dimanche de chaque semaine),
+ *   plus ceux de la semaine bonus (semaine 53) quand l'année ISO en compte 53
  *
  * Les thèmes qui ont une saison (champ `season`) tombés au tirage sont placés sur une semaine
  * de cette saison.
@@ -103,6 +109,19 @@ export function buildYear(allThemes, year, random = Math.random) {
     const last = { ...first, start: toDateArray(end), title: `FIN Theme: ${theme.summary}` }
     return [first, last]
   })
+
+  // Année à 53 semaines ISO : la semaine 53 est une semaine bonus (thème libre)
+  if (getISOWeeksInYear(year) > THEMES_PER_YEAR) {
+    const { start, end } = getISOWeekRange(THEMES_PER_YEAR + 1, year)
+    const bonus = {
+      start: toDateArray(start),
+      title: BONUS_WEEK_LABEL,
+      description: BONUS_WEEK_LABEL,
+      status: 'CONFIRMED',
+      busyStatus: 'FREE'
+    }
+    events.push(bonus, { ...bonus, start: toDateArray(end), title: `FIN ${BONUS_WEEK_LABEL}` })
+  }
 
   return { themes, events }
 }
