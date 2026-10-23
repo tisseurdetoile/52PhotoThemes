@@ -140,8 +140,8 @@ const TOAST_DURATION_MS = 2500
 export default {
   name: 'ThemesDisplay',
   props: {
-    year: Number,
-    themes: Array,
+    year: { type: Number, required: true },
+    themes: { type: Array, required: true },
     // Date de référence (injectable pour les tests)
     today: {
       type: Date,
