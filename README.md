@@ -5,7 +5,8 @@ Application Vue 3 + Vite, déployée sur GitHub Pages.
 
 ## Installation
 
-Node 22 (version indiquée dans `.nvmrc`, utilisée aussi par le CI) :
+Node 22 (version indiquée dans `.nvmrc`, utilisée aussi par le CI), au minimum 22.22.2 (voir `engines`
+dans `package.json`) :
 
 ```
 nvm use   # optionnel
@@ -25,7 +26,8 @@ npm run preview   # prévisualiser le build
 ```
 npm test          # tests unitaires (une exécution)
 npm run test:unit # tests unitaires en mode watch
-npm run lint      # ESLint (avec correction automatique)
+npm run lint      # ESLint
+npm run lint:fix  # ESLint avec correction automatique
 npm run format    # Prettier sur src/
 ```
 

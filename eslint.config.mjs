@@ -1,5 +1,6 @@
 import js from '@eslint/js'
 import pluginVue from 'eslint-plugin-vue'
+import skipFormatting from '@vue/eslint-config-prettier/skip-formatting'
 import globals from 'globals'
 
 export default [
@@ -10,6 +11,11 @@ export default [
   js.configs.recommended,
 
   ...pluginVue.configs['flat/recommended'],
+
+  // Désactive les règles de formatage d'ESLint/eslint-plugin-vue qui entrent en conflit
+  // avec Prettier : la mise en forme est le travail de Prettier (npm run format).
+  // À garder après les configs ci-dessus.
+  skipFormatting,
 
   {
     files: ['**/*.{js,mjs,cjs,vue}'],
@@ -25,7 +31,8 @@ export default [
 
     rules: {
       // JavaScript
-      'no-console': 'warn',
+      // console.error / console.warn restent autorisés : ce sont des signalements d'erreur voulus
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
       'no-debugger': 'warn',
       'no-unused-vars': [
         'error',
@@ -36,24 +43,15 @@ export default [
       ],
 
       // Vue
-      'vue/multi-word-component-names': 'off',
-      'vue/html-self-closing': [
-        'error',
-        {
-          html: {
-            void: 'always',
-            normal: 'never',
-            component: 'always'
-          }
-        }
-      ],
-      'vue/max-attributes-per-line': [
-        'warn',
-        {
-          singleline: 3,
-          multiline: 1
-        }
-      ]
+      'vue/multi-word-component-names': 'off'
+    }
+  },
+
+  {
+    // Les scripts en ligne de commande affichent volontairement des messages
+    files: ['scripts/**/*.{js,mjs}'],
+    rules: {
+      'no-console': 'off'
     }
   }
 ]
